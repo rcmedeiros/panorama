@@ -1,0 +1,37 @@
+{
+    "editor.tabSize": 2,
+    "eslint.validate": [
+        "javascript",
+        "javascriptreact",
+        "typescript",
+        "typescriptreact",
+    ],
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": true,
+    },
+    "editor.cursorBlinking": "expand",
+    "editor.detectIndentation": true,
+    "editor.find.autoFindInSelection": "multiline",
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "eslint.format.enable": true,
+    "editor.formatOnSave": false,
+    "editor.formatOnPaste": true,
+    "editor.formatOnType": true,
+    "cSpell.ignoreRegExpList": [
+        "/[^\\s]{40,}/",
+        "\/\\*[\\s\\S]*?\\*\/|\/\/.*",
+        "\\b(?:description|summary|example)\\b: ([\"'`])(?:(?=(\\\\?))\\2.)*?\\1",
+        "CStyleComment"
+    ],
+    "cSpell.enabledLanguageIds": [
+        "git-commit",
+        "javascript",
+        "typescript",
+        "yaml",
+        "yml"
+    ],
+    "cSpell.words": [],
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    }
+}

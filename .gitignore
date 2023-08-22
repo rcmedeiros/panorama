@@ -1,0 +1,40 @@
+# Dist files
+dist/
+.idea
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# reports
+reports
+
+# Coverage directory used by tools like istanbul
+coverage
+coverage.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+node_modules/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+
+# dotenv environment variables file
+*.env
+
+# Sonar scanner folder
+.scannerwork
+
+# WSL2 Identifier
+*.Identifier
+
+.npmrc
+
+sonar-project.properties

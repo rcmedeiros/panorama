@@ -1,0 +1,4 @@
+include:
+  - project: 'carenet/orchestra/cicd'
+    ref: master
+    file: '/typescript_service.yaml'

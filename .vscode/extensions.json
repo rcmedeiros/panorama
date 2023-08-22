@@ -1,0 +1,12 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "streetsidesoftware.code-spell-checker",
+    "yzhang.markdown-all-in-one",
+    "SonarSource.sonarlint-vscode",
+    "amatiasq.sort-imports",
+    "wayou.vscode-todo-highlight",
+    "VisualStudioExptTeam.vscodeintellicode",
+  ]
+}
