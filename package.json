@@ -4,7 +4,7 @@
   "description": "",
   "main": "index",
   "scripts": {
-    "build": "tsc -p tsconfig.json  --removeComments true --listFiles false --sourceMap false --inlineSourceMap false --inlineSources false --listEmittedFiles false --declaration true && cp \"package.json\" \"dist/\"",
+    "build": "rm -rf dist && tsc -p tsconfig.json && cp -r \"package.json\" \"templates\" \"dist/\"",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "test": "TS_NODE_PROJECT=test/tsconfig.json NODE_ENV=test nyc mocha --sort --trace-warnings --require ts-node/register --check-leaks --recursive --timeout 60000 --exit test/**/*test.ts && nyc report --reporter=text-lcov > coverage.lcov",
