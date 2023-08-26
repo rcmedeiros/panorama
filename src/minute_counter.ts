@@ -6,6 +6,7 @@ type TestObj = {
 };
 
 export class MinuteCounter {
+  private static readonly OBJ: string = `${process.env.NODE_ENV}_TEST`;
   private readonly redis: RedisAdapter;
 
   public constructor() {
@@ -14,7 +15,7 @@ export class MinuteCounter {
     this.redis
       .connect()
       .then(() => {
-        void this.redis.setJson('TEST', {
+        void this.redis.setJson(MinuteCounter.OBJ, {
           startDate: new Date(),
           currentCount: 0,
         });
@@ -28,16 +29,16 @@ export class MinuteCounter {
 
   private async count(): Promise<void> {
     console.debug('increment');
-    const obj: TestObj = (await this.redis.getJson('TEST')) as TestObj;
+    const obj: TestObj = (await this.redis.getJson(MinuteCounter.OBJ)) as TestObj;
     obj.currentCount++;
-    await this.redis.setJson('TEST', obj);
+    await this.redis.setJson(`${process.env.NODE_ENV}_TEST`, obj);
     setTimeout(() => {
       void this.count();
     }, 60000);
   }
 
   public async current(): Promise<Date> {
-    const o: TestObj = (await this.redis.getJson('TEST')) as TestObj;
+    const o: TestObj = (await this.redis.getJson(MinuteCounter.OBJ)) as TestObj;
     const result: Date = new Date(o.startDate);
     result.setTime(result.getTime() + o.currentCount * 60000);
     return result;
