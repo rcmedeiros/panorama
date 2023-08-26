@@ -31,7 +31,7 @@ export class MinuteCounter {
     console.debug('increment');
     const obj: TestObj = (await this.redis.getJson(MinuteCounter.OBJ)) as TestObj;
     obj.currentCount++;
-    await this.redis.setJson(`${process.env.NODE_ENV}_TEST`, obj);
+    await this.redis.setJson(MinuteCounter.OBJ, obj);
     setTimeout(() => {
       void this.count();
     }, 60000);
