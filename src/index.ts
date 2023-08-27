@@ -21,7 +21,7 @@ app.set('port', 80);
 
 app.use(express.static('static'));
 
-app.get('/', Dashboard.route);
+app.get('*', Dashboard.route);
 
 if (process.env.NODE_ENV?.toUpperCase().startsWith('PROD')) {
   console.debug = (): void => {
