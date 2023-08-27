@@ -4,7 +4,8 @@
   "description": "",
   "main": "index",
   "scripts": {
-    "build": "rm -rf dist && tsc -p tsconfig.json && cp -r \"package.json\" \"templates\" \"**/*.html\"  \"static\" \"dist/\"",
+    "build": "rm -rf dist && tsc -p tsconfig.json && cp -r \"package.json\" \"static\" \"dist/\" && npm run html",
+    "html": "cd src && find . -iname '*.html' -exec cp --parents {} ../dist ;",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "test": "TS_NODE_PROJECT=test/tsconfig.json NODE_ENV=test nyc mocha --sort --trace-warnings --require ts-node/register --check-leaks --recursive --timeout 60000 --exit test/**/*test.ts && nyc report --reporter=text-lcov > coverage.lcov",
