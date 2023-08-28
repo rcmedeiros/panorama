@@ -1,25 +1,41 @@
 import * as core from 'express-serve-static-core';
 
 import { Rejection, Resolution } from './types';
+import express, { NextFunction, Request, Response } from 'express';
 
 import { Dashboard } from './pages/dashboard';
 import compression from 'compression';
 import cors from 'cors';
-import express from 'express';
+import crypto from 'crypto';
 import figlet from 'figlet';
 import helmet from 'helmet';
 
 const app: core.Express = express();
+app.use(express.static('static'));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.raw());
 app.use(compression());
-app.use(helmet());
+
+app.use((_request: Request, response: Response, next: NextFunction) => {
+  response.locals.cspNonce = crypto.randomBytes(16).toString('hex');
+  next();
+});
+
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        scriptSrc: ["'self'", (_request: Request, response: Response): string => `'nonce-${response.locals.cspNonce}'`],
+      },
+    },
+  }),
+);
 app.use(express.json());
 app.use(cors());
 app.set('port', 80);
-
-app.use(express.static('static'));
 
 app.get('*', Dashboard.route);
 

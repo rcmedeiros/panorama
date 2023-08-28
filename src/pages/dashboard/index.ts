@@ -7,6 +7,6 @@ import util from 'util';
 
 export class Dashboard {
   public static route: RequestHandler = (_request: Request, response: Response): void => {
-    response.send(util.format(fs.readFileSync(path.join(__dirname, 'index.html')).toString()));
+    response.send(util.format(fs.readFileSync(path.join(__dirname, 'index.html')).toString(), response.locals.cspNonce));
   };
 }
