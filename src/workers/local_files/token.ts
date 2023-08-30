@@ -13,7 +13,7 @@ export class OneDriveAuth {
     this.expires = 0;
   }
 
-  private async getToken(): Promise<string> {
+  public async getToken(): Promise<string> {
     if (Date.now() > this.expires) {
       const { body }: { body: Login } = await needle('post', `https://login.microsoftonline.com/${process.env.OD_TENANT}/oauth2/v2.0/token`, {
         grant_type: 'client_credentials',
