@@ -1,6 +1,6 @@
 import * as redis from 'redis';
 
-import { Rejection, Resolution } from './types';
+import { Rejection, Resolution } from '../types';
 
 type RedisClient = ReturnType<typeof redis.createClient>;
 

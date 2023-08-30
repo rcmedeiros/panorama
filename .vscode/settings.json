@@ -30,7 +30,9 @@
         "yaml",
         "yml"
     ],
-    "cSpell.words": [],
+    "cSpell.words": [
+        "Millis"
+    ],
     "[typescript]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     }
