@@ -8,17 +8,24 @@ type Login = {
 export class OneDriveAuth {
   private _token: string;
   private expires: number;
+  private readonly tenant: string;
+  private readonly clientId: string;
+  private readonly clientSecret: string;
 
-  private constructor() {
+  public constructor(tenant: string, clientId: string, clientSecret: string) {
+    this.tenant = tenant;
+    this.clientId = clientId;
+    this.clientSecret = clientSecret;
+
     this.expires = 0;
   }
 
   public async getToken(): Promise<string> {
     if (Date.now() > this.expires) {
-      const { body }: { body: Login } = await needle('post', `https://login.microsoftonline.com/${process.env.OD_TENANT}/oauth2/v2.0/token`, {
+      const { body }: { body: Login } = await needle('post', `https://login.microsoftonline.com/${this.tenant}/oauth2/v2.0/token`, {
         grant_type: 'client_credentials',
-        client_id: process.env.OD_CLIENT_ID,
-        client_secret: process.env.OD_CLIENT_SECRET,
+        client_id: this.clientId,
+        client_secret: this.clientSecret,
         scope: 'https://graph.microsoft.com/.default',
       });
       this._token = body.access_token;

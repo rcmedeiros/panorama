@@ -31,7 +31,8 @@
         "yml"
     ],
     "cSpell.words": [
-        "Millis"
+        "Millis",
+        "odata"
     ],
     "[typescript]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
