@@ -50,10 +50,16 @@ export class LocalFiles {
         deltaLink[user.username] = 'latest';
       });
 
+      const memberCounter: Set<string> = new Set();
+      let filesCounter: number = 0;
+
       do {
         for (const user of users) {
           deltaLink[user.username] = await this.oneDrive.delta(user.drive_id, await this.auth.getToken(), deltaLink[user.username], (fileName: string) => {
+            memberCounter.add(user.username);
+            filesCounter++;
             console.debug(`${user.username} -> ${fileName}`);
+
             void (async (): Promise<void> => {
               await this.db.executeQuery({
                 name: 'insertLocalFiles',
@@ -65,6 +71,12 @@ export class LocalFiles {
         }
 
         await waitFor(isProduction() ? 60000 : 5000);
+
+        if (filesCounter) {
+          console.info(`Logged ${filesCounter} modification${filesCounter > 1 ? 's' : ''} by ${memberCounter.size} member${memberCounter.size > 1 ? 's' : ''}`);
+          memberCounter.clear();
+          filesCounter = 0;
+        }
       } while (deltaLink);
     })();
   }
