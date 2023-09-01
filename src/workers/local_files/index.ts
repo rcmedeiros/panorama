@@ -1,84 +1,89 @@
-import { isProduction, waitFor, waitUntil } from '../../helpers';
+import { DataAccessFactory, LocalFileDAO, Member, MemberDAO, OneDriveDAO } from '../../model';
+import { isProduction, waitFor } from '../../helpers';
 
 import { OneDrive } from './one_drive_delta';
-import { OneDriveAuth } from './one_drive_auth';
-import { PostgreSQLAdapter } from '../../adapters';
 
 export class LocalFiles {
-  private readonly auth: OneDriveAuth;
-  private readonly db: PostgreSQLAdapter;
+  private readonly memberDAO: MemberDAO;
+  private readonly localFileDAO: LocalFileDAO;
+  private readonly oneDriveDAO: OneDriveDAO;
   private readonly oneDrive: OneDrive;
+  private readonly deltaLink: Record<string, string>;
+  private readonly memberCounter: Set<string>;
+  private filesCounter: number = 0;
 
   public constructor() {
-    this.auth = new OneDriveAuth(process.env.OD_TENANT, process.env.OD_CLIENT_ID, process.env.OD_CLIENT_SECRET);
-    this.db = PostgreSQLAdapter.getInstance(process.env.DB);
+    this.memberDAO = DataAccessFactory.getMemberDAO();
+    this.localFileDAO = DataAccessFactory.getLocalFileDAO();
+    this.oneDriveDAO = DataAccessFactory.getOneDriveDAO();
     this.oneDrive = new OneDrive();
+
+    this.deltaLink = {};
+    this.memberCounter = new Set();
+    this.filesCounter = 0;
+  }
+
+  private async setupDrive(member: Member): Promise<void> {
+    member.driveId = await this.oneDriveDAO.getUserDrive(await this.oneDriveDAO.getUserId(member.office365Username));
+    await this.memberDAO.setupDrive(member);
+  }
+
+  private addToCounter(username: string): void {
+    this.memberCounter.add(username);
+    this.filesCounter++;
+  }
+
+  private resetCounter(): void {
+    if (this.filesCounter) {
+      console.info(
+        `Logged ${this.filesCounter} modification${this.filesCounter > 1 ? 's' : ''} by ${this.memberCounter.size} member${
+          this.memberCounter.size > 1 ? 's' : ''
+        }`,
+      );
+      this.memberCounter.clear();
+      this.filesCounter = 0;
+    }
   }
 
   public start(): void {
     void (async (): Promise<void> => {
-      await waitUntil(() => this.db.ready);
+      await this.memberDAO.isReady();
 
-      const users: Array<{ username: string; drive_id: string }> = (await this.db.executeQuery({
-        name: 'getMonitoredUsers',
-        text: `
-          select
-            m.username
-            ,m.drive_id
-          from
-            main.members m
-          where
-            m.monitored = true
-        `,
-        values: undefined,
-      })) as Array<{ username: string; drive_id: string }>;
+      const users: Array<Member> = await this.memberDAO.getMembers(true);
 
-      /**   TODO: From user e-mail, get id. From user id, get drive.
-      const { body }: { body: unknown } = await needle('get', `https://graph.microsoft.com/v1.0/users/rafael.medeiros@carenet.com.br`, undefined, {
-        headers: { Authorization: `Bearer ${await this.auth.getToken()}` },
-      });
-
-      const { body }: { body: unknown } = await needle('get', `https://graph.microsoft.com/v1.0/users/${users[0].azure_object_id}/drive`, undefined, {
-        headers: { Authorization: `Bearer ${await this.auth.getToken()}` },
-      });
-      */
+      for (const user of users) {
+        if (!user.driveId) {
+          await this.setupDrive(user);
+        }
+      }
 
       console.debug('Starting OneDrive monitoring...');
 
-      const deltaLink: Record<string, string> = {};
       users.forEach((user: { username: string }) => {
-        deltaLink[user.username] = 'latest';
+        this.deltaLink[user.username] = 'latest';
       });
-
-      const memberCounter: Set<string> = new Set();
-      let filesCounter: number = 0;
 
       do {
         for (const user of users) {
-          deltaLink[user.username] = await this.oneDrive.delta(user.drive_id, await this.auth.getToken(), deltaLink[user.username], (fileName: string) => {
-            memberCounter.add(user.username);
-            filesCounter++;
-            console.debug(`${user.username} -> ${fileName}`);
+          this.deltaLink[user.username] = await this.oneDrive.delta(
+            user.driveId,
+            await this.oneDriveDAO.getToken(),
+            this.deltaLink[user.username],
+            (fileName: string) => {
+              this.addToCounter(user.username);
+              console.debug(`${user.username} -> ${fileName}`);
 
-            void (async (): Promise<void> => {
-              await this.db.executeQuery({
-                name: 'insertLocalFiles',
-                text: 'INSERT INTO main.local_files ("member", filename) VALUES($1, $2);',
-                values: [user.username, fileName],
-              });
-            })();
-          });
+              void (async (): Promise<void> => {
+                await this.localFileDAO.insertFile({ member: user.username, fileName: fileName });
+              })();
+            },
+          );
         }
 
         await waitFor(isProduction() ? 60000 : 5000);
 
-        if (filesCounter) {
-          console.info(`Logged ${filesCounter} modification${filesCounter > 1 ? 's' : ''} by ${memberCounter.size} member${memberCounter.size > 1 ? 's' : ''}`);
-          memberCounter.clear();
-          filesCounter = 0;
-        }
-      } while (deltaLink);
+        this.resetCounter();
+      } while (this.deltaLink);
     })();
   }
 }
-//

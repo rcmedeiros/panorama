@@ -12,10 +12,10 @@ export class OneDriveAuth {
   private readonly clientId: string;
   private readonly clientSecret: string;
 
-  public constructor(tenant: string, clientId: string, clientSecret: string) {
-    this.tenant = tenant;
-    this.clientId = clientId;
-    this.clientSecret = clientSecret;
+  public constructor() {
+    this.tenant = process.env.OD_TENANT;
+    this.clientId = process.env.OD_CLIENT_ID;
+    this.clientSecret = process.env.OD_CLIENT_SECRET;
 
     this.expires = 0;
   }
