@@ -16,7 +16,7 @@ export class LocalFiles {
     this.memberDAO = DataAccessFactory.getMemberDAO();
     this.localFileDAO = DataAccessFactory.getLocalFileDAO();
     this.oneDriveDAO = DataAccessFactory.getOneDriveDAO();
-    this.oneDrive = new OneDrive();
+    this.oneDrive = new OneDrive(this.oneDriveDAO);
 
     this.deltaLink = {};
     this.memberCounter = new Set();
@@ -65,19 +65,14 @@ export class LocalFiles {
 
       do {
         for (const user of users) {
-          this.deltaLink[user.username] = await this.oneDrive.delta(
-            user.driveId,
-            await this.oneDriveDAO.getToken(),
-            this.deltaLink[user.username],
-            (fileName: string) => {
-              this.addToCounter(user.username);
-              console.debug(`${user.username} -> ${fileName}`);
+          this.deltaLink[user.username] = await this.oneDrive.delta(user.driveId, this.deltaLink[user.username], (fileName: string) => {
+            this.addToCounter(user.username);
+            console.debug(`${user.username} -> ${fileName}`);
 
-              void (async (): Promise<void> => {
-                await this.localFileDAO.insertFile({ member: user.username, fileName: fileName });
-              })();
-            },
-          );
+            void (async (): Promise<void> => {
+              await this.localFileDAO.insertFile({ member: user.username, fileName: fileName });
+            })();
+          });
         }
 
         await waitFor(isProduction() ? 60000 : 5000);
