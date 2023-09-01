@@ -15,10 +15,10 @@ export class OneDrive {
     this.oneDriveDAO = oneDriveDAO;
   }
 
-  private async identify(id: string, driveId: string): Promise<string> {
-    let fileName: string = 'New file';
+  private async identify(fileId: string, driveId: string): Promise<string> {
+    let fileName: string = undefined;
 
-    const children: OneDriveChildren = await this.oneDriveDAO.getChildren(driveId, id);
+    const children: OneDriveChildren = await this.oneDriveDAO.getChildren(driveId, fileId);
 
     const entriesFile: OneDriveItem = (children.value?.filter((f: OneDriveItem) => f.name === 'entries.json') || [undefined])[0];
 
@@ -36,7 +36,8 @@ export class OneDrive {
         if (f.webUrl?.includes('vscode_history')) {
           const s: string = f.webUrl.substring(f.webUrl.indexOf('carenet_com_br/') + 15);
           if ((s.match(/\//g) || []).length === 2) {
-            void notify(await this.identify(f.id, driveId));
+            const fileName: string = await this.identify(f.id, driveId);
+            if (fileName) void notify(fileName);
           }
         }
         await waitFor(1000);

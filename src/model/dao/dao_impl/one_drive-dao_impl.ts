@@ -33,8 +33,8 @@ export class OneDriveDAOImpl implements OneDriveDAO {
     return id;
   }
 
-  public async getChildren(driveId: string, id: string): Promise<OneDriveChildren> {
-    const { body }: { body: OneDriveChildren } = await needle('get', `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${id}/children`, undefined, {
+  public async getChildren(driveId: string, fileId: string): Promise<OneDriveChildren> {
+    const { body }: { body: OneDriveChildren } = await needle('get', `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${fileId}/children`, undefined, {
       headers: { Authorization: `Bearer ${await this.getToken()}` },
     });
     return body;
