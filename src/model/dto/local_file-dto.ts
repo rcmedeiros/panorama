@@ -1,5 +1,5 @@
-import { LocalFile } from '..';
 import { DTO } from './dto';
+import { LocalFile } from '..';
 
 export class LocalFileDTO extends DTO implements LocalFile {
   private _id: number;
