@@ -15,7 +15,7 @@ export class BaseWebComponent {
     console.info('--------------------');
     console.info(stackLine);
     console.info('--------------------');
-    console.info(stackLine.match(/\((.*?)\\([^\\]*)\)/)[1]);
+    console.info(stackLine.match(/\((.*?)\\([^\\]*)\)/));
     console.info('--------------------');
     this.content = fs.readFileSync(path.join(stackLine.match(/\((.*?)\\([^\\]*)\)/)[1], 'index.html')).toString();
   }
