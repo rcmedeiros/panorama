@@ -10,6 +10,11 @@ export class BaseWebComponent {
   public constructor() {
     const className: string = (Object.getPrototypeOf(this) as Prototype).constructor.name;
     const stackLine: string = new Error().stack.split('\n').filter((l: string) => l.startsWith(`    at new ${className}`))[0];
+    console.info('--------------------');
+    console.info(new Error().stack.split('\n'));
+    console.info('--------------------');
+    console.info(stackLine.match(/\((.*?)\\([^\\]*)\)/)[1]);
+    console.info('--------------------');
     this.content = fs.readFileSync(path.join(stackLine.match(/\((.*?)\\([^\\]*)\)/)[1], 'index.html')).toString();
   }
 
