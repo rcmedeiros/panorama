@@ -11,7 +11,9 @@ export class BaseWebComponent {
     const className: string = (Object.getPrototypeOf(this) as Prototype).constructor.name;
     const stackLine: string = new Error().stack.split('\n').filter((l: string) => l.startsWith(`    at new ${className}`))[0];
     console.info('--------------------');
-    console.info(new Error().stack.split('\n'));
+    console.info(new Error().stack.split('\n').filter((l: string) => l.startsWith(`    at new ${className}`)));
+    console.info('--------------------');
+    console.info(stackLine);
     console.info('--------------------');
     console.info(stackLine.match(/\((.*?)\\([^\\]*)\)/)[1]);
     console.info('--------------------');
