@@ -1,5 +1,6 @@
+import { LocalFile, Member } from '..';
+
 import { DTO } from './dto';
-import { Member } from '..';
 
 export class MemberDTO extends DTO implements Member {
   private _username: string;
@@ -8,6 +9,7 @@ export class MemberDTO extends DTO implements Member {
   private _dbUsername: string;
   private _office365Username: string;
   private _driveId: string;
+  private _localFiles?: Array<LocalFile>;
 
   public get username(): string {
     return this._username;
@@ -49,5 +51,14 @@ export class MemberDTO extends DTO implements Member {
   }
   public set driveId(value: string) {
     this._driveId = value;
+  }
+
+  public get localFiles(): Array<LocalFile> {
+    if (!this._localFiles) this._localFiles = [];
+
+    return this._localFiles;
+  }
+  public set localFiles(value: Array<LocalFile>) {
+    this._localFiles = value;
   }
 }

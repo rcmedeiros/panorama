@@ -4,3 +4,5 @@ export * from './sql_queries';
 export * from './one_drive_children';
 export * from './one_drive_item';
 export * from './one_drive_delta';
+export * from './stats_args';
+export * from './tuple';

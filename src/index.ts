@@ -3,7 +3,7 @@ import * as core from 'express-serve-static-core';
 import { Rejection, Resolution } from './types';
 import express, { NextFunction, Request, Response } from 'express';
 
-import { Dashboard } from './web/pages/dashboard';
+import { DashboardView } from './web/pages/dashboard_view';
 import { LocalFiles } from './workers/local_files';
 import compression from 'compression';
 import cors from 'cors';
@@ -39,7 +39,7 @@ app.use(express.json());
 app.use(cors());
 app.set('port', 80);
 
-app.get('*', new Dashboard().route);
+app.get('*', new DashboardView().route);
 
 if (isProduction()) {
   console.debug = (): void => {

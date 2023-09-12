@@ -1,8 +1,24 @@
-import { Member, MemberDAO, MemberDTO } from '../..';
+import { LocalFileDTO, Member, MemberDAO, MemberDTO } from '../..';
 
 import { BaseDbDAOImpl } from './base_db-dao_impl';
 
 export class MemberDAOImpl extends BaseDbDAOImpl implements MemberDAO {
+  private readMember(row: Record<string, unknown>, currMember: Member, result: Array<Member>): Member {
+    if (row.username !== currMember.username) {
+      currMember = new MemberDTO(row);
+
+      result.push(currMember);
+    }
+
+    return currMember;
+  }
+
+  private readLocalFile(row: Record<string, unknown>, currMember: Member): void {
+    if (row.file_name) {
+      currMember.localFiles.push(new LocalFileDTO(row));
+    }
+  }
+
   public async getMembers(onlyMonitored?: boolean): Promise<Array<Member>> {
     const users: Array<unknown> = (await this.db.executeQuery({
       name: 'getMonitoredUsers',
@@ -35,5 +51,34 @@ export class MemberDAOImpl extends BaseDbDAOImpl implements MemberDAO {
         `,
       values: [member.username, member.driveId],
     });
+  }
+
+  public async getMembersStats(): Promise<Array<Member>> {
+    const rows: Array<unknown> = (await this.db.executeQuery({
+      name: 'getMembersStatus',
+      text: `
+        select
+          username,
+          name,
+          member,
+          file_name,
+          project,
+          timestamp
+        from
+          main.current_status
+        `,
+      values: [],
+    })) as Array<unknown>;
+
+    const result: Array<Member> = [];
+
+    let currMember: Member = new MemberDTO();
+
+    rows.forEach((row: Record<string, unknown>) => {
+      currMember = this.readMember(row, currMember, result);
+      this.readLocalFile(row, currMember);
+    });
+
+    return result;
   }
 }
