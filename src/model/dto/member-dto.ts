@@ -9,6 +9,7 @@ export class MemberDTO extends DTO implements Member {
   private _dbUsername: string;
   private _office365Username: string;
   private _driveId: string;
+  private _gitlabId: number;
   private _localFiles?: Array<LocalFile>;
 
   public get username(): string {
@@ -51,6 +52,13 @@ export class MemberDTO extends DTO implements Member {
   }
   public set driveId(value: string) {
     this._driveId = value;
+  }
+
+  public get gitlabId(): number {
+    return this._gitlabId;
+  }
+  public set gitlabId(value: number) {
+    this._gitlabId = value;
   }
 
   public get localFiles(): Array<LocalFile> {

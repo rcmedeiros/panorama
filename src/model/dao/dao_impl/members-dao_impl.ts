@@ -30,6 +30,7 @@ export class MemberDAOImpl extends BaseDbDAOImpl implements MemberDAO {
             ,m.drive_id
             ,m.db_username
             ,m.office365_username
+            ,m.gitlab_id
           from
             main.member m
           ${onlyMonitored ? 'where m.monitored = true' : ''}
@@ -60,6 +61,7 @@ export class MemberDAOImpl extends BaseDbDAOImpl implements MemberDAO {
         select
           username,
           name,
+          gitlab_id,
           member,
           file_name,
           project,

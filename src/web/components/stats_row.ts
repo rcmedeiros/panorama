@@ -41,10 +41,9 @@ export class StatsRowComponent implements WebComponent {
                 hidden: true,
               },
               {
-                label: 'Commits',
-                data: ${this.args.commits ? JSON.stringify(this.args.commits) : this.blank},
+                label: 'Gitlab',
+                data: ${this.args.gitEvents ? JSON.stringify(this.args.gitEvents) : this.blank},
                 backgroundColor: '#DB4128',
-                hidden: true,
               },
               {
                 label: 'SQL',

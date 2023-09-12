@@ -7,5 +7,6 @@ export interface Member {
   dbUsername?: string;
   office365Username?: string;
   driveId?: string;
+  gitlabId: number;
   localFiles?: Array<LocalFile>;
 }

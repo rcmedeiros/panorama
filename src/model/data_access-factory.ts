@@ -1,4 +1,15 @@
-import { LocalFileDAO, LocalFileDAOImpl, MemberDAO, MemberDAOImpl, OneDriveDAO, OneDriveDAOImpl, SQLQueryDAO, SQLQueryDAOImpl } from '.';
+import {
+  GitlabDAO,
+  GitlabDAOImpl,
+  LocalFileDAO,
+  LocalFileDAOImpl,
+  MemberDAO,
+  MemberDAOImpl,
+  OneDriveDAO,
+  OneDriveDAOImpl,
+  SQLQueryDAO,
+  SQLQueryDAOImpl,
+} from '.';
 
 export class DataAccessFactory {
   public static getMemberDAO(): MemberDAO {
@@ -15,5 +26,9 @@ export class DataAccessFactory {
 
   public static getOneDriveDAO(): OneDriveDAO {
     return new OneDriveDAOImpl();
+  }
+
+  public static getGitlabDAO(): GitlabDAO {
+    return new GitlabDAOImpl();
   }
 }

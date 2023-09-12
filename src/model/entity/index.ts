@@ -6,3 +6,5 @@ export * from './one_drive_item';
 export * from './one_drive_delta';
 export * from './stats_args';
 export * from './tuple';
+export * from './gitlab_event';
+export * from './gitlab_event_author';
