@@ -55,21 +55,24 @@ export class MemberDAOImpl extends BaseDbDAOImpl implements MemberDAO {
   }
 
   public async getMembersStats(): Promise<Array<Member>> {
+    const d: Date = new Date();
+    d.setHours(0, 0, 0, 0);
+
     const rows: Array<unknown> = (await this.db.executeQuery({
       name: 'getMembersStatus',
       text: `
-        select
-          username,
-          name,
-          gitlab_id,
-          member,
-          file_name,
-          project,
-          timestamp
-        from
-          main.current_status
+        SELECT m.username,
+            m.name,
+            lf.member,
+            lf.file_name,
+            lf.project,
+            lf."timestamp",
+            m.gitlab_id
+          FROM main.member m
+            LEFT JOIN main.local_file lf ON m.monitored IS TRUE AND lf.member::text = m.username::text AND lf."timestamp" >= $1
+          ORDER BY m.username, lf."timestamp";
         `,
-      values: [],
+      values: [d],
     })) as Array<unknown>;
 
     const result: Array<Member> = [];
