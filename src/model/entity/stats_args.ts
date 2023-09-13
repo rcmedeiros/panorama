@@ -4,6 +4,7 @@ export type StatsArgs = {
   username: string;
   name: string;
   vscode: Tuple<number, 24>;
+  vscodeLabels: string;
   intellij?: Tuple<number, 24>;
   gitEvents?: Tuple<number, 24>;
   sql?: Tuple<number, 24>;

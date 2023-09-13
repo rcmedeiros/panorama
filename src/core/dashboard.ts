@@ -18,8 +18,10 @@ export class Dashboard {
 
     members.forEach((member: Member, idx: number) => {
       const vscode: Tuple<number, 24> = [...this.empty];
+      const vscodeLabels: Set<string> = new Set();
       member.localFiles.forEach((lf: LocalFile) => {
         vscode[lf.timestamp.getHours()]++;
+        vscodeLabels.add(lf.project);
       });
 
       const gitEvents: Tuple<number, 24> = [...this.empty];
@@ -31,6 +33,7 @@ export class Dashboard {
         username: member.username,
         name: member.name,
         vscode,
+        vscodeLabels: Array.from(vscodeLabels).join('|'),
         gitEvents,
       };
 
