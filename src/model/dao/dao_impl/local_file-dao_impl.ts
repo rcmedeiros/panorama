@@ -6,8 +6,8 @@ export class LocalFileDAOImpl extends BaseDbDAOImpl implements LocalFileDAO {
   public async insertFile(file: LocalFile): Promise<void> {
     await this.db.executeQuery({
       name: 'insertLocalFiles',
-      text: 'INSERT INTO main.local_file ("member", file_name) VALUES($1, $2);',
-      values: [file.member, file.fileName],
+      text: 'INSERT INTO main.local_file ("member", file_name, timestamp) VALUES($1, $2, $3);',
+      values: [file.member, file.fileName, file.timestamp],
     });
   }
 }

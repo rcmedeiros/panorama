@@ -9,6 +9,7 @@ export class MemberDTO extends DTO implements Member {
   private _dbUsername: string;
   private _office365Username: string;
   private _driveId: string;
+  private _deltaLink?: string;
   private _gitlabId: number;
   private _localFiles?: Array<LocalFile>;
 
@@ -52,6 +53,13 @@ export class MemberDTO extends DTO implements Member {
   }
   public set driveId(value: string) {
     this._driveId = value;
+  }
+
+  public get deltaLink(): string {
+    return this._deltaLink;
+  }
+  public set deltaLink(value: string) {
+    this._deltaLink = value;
   }
 
   public get gitlabId(): number {

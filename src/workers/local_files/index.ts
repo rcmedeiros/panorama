@@ -1,4 +1,4 @@
-import { DataAccessFactory, LocalFileDAO, Member, MemberDAO, OneDriveDAO } from '../../model';
+import { DataAccessFactory, LocalFile, LocalFileDAO, Member, MemberDAO, OneDriveDAO } from '../../model';
 import { isProduction, waitFor } from '../../helpers';
 
 import { OneDrive } from './one_drive_delta';
@@ -49,9 +49,9 @@ export class LocalFiles {
     void (async (): Promise<void> => {
       await this.memberDAO.isReady();
 
-      const users: Array<Member> = await this.memberDAO.getMembers(true);
+      const members: Array<Member> = await this.memberDAO.getMembers(true);
 
-      for (const user of users) {
+      for (const user of members) {
         if (!user.driveId) {
           await this.setupDrive(user);
         }
@@ -59,22 +59,28 @@ export class LocalFiles {
 
       console.debug('Starting OneDrive monitoring...');
 
-      users.forEach((user: { username: string }) => {
-        this.deltaLink[user.username] = 'latest';
+      members.forEach((member: Member) => {
+        this.deltaLink[member.username] = member.deltaLink || 'latest';
       });
 
       do {
-        for (const user of users) {
-          this.deltaLink[user.username] = await this.oneDrive.delta(user.driveId, this.deltaLink[user.username], (fileName: string) => {
-            this.addToCounter(user.username);
-            console.debug(`${user.username} -> ${fileName}`);
+        try {
+          for (const member of members) {
+            this.deltaLink[member.username] = await this.oneDrive.delta(member.driveId, this.deltaLink[member.username], (update: LocalFile) => {
+              this.addToCounter(member.username);
+              console.debug(`${member.username} -> ${update.fileName}`);
 
-            void (async (): Promise<void> => {
-              await this.localFileDAO.insertFile({ member: user.username, fileName: fileName });
-            })();
-          });
+              void (async (): Promise<void> => {
+                await Promise.all([
+                  this.localFileDAO.insertFile({ ...update, ...{ member: member.username } }),
+                  this.memberDAO.updateDeltaLink(member.username, this.deltaLink[member.username]),
+                ]);
+              })();
+            });
+          }
+        } catch (e) {
+          console.error(e);
         }
-
         await waitFor(isProduction() ? 60000 : 5000);
 
         this.resetCounter();

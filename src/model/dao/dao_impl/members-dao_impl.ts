@@ -28,6 +28,7 @@ export class MemberDAOImpl extends BaseDbDAOImpl implements MemberDAO {
             ,m.monitored
             ,m.name
             ,m.drive_id
+            ,m.delta_link
             ,m.db_username
             ,m.office365_username
             ,m.gitlab_id
@@ -39,6 +40,16 @@ export class MemberDAOImpl extends BaseDbDAOImpl implements MemberDAO {
     })) as Array<unknown>;
 
     return users.map((r: unknown) => new MemberDTO(r));
+  }
+
+  public async updateDeltaLink(username: string, deltaLink: string): Promise<void> {
+    await this.db.executeQuery({
+      name: 'updateDeltaLink',
+      text: `
+        update main.member set delta_link = $1 where username = $2
+        `,
+      values: [deltaLink, username],
+    });
   }
 
   public async setupDrive(member: Member): Promise<void> {
