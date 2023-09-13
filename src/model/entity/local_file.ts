@@ -2,6 +2,6 @@ export interface LocalFile {
   id?: number;
   member: string;
   fileName: string;
-  project?: number;
+  project?: string;
   timestamp?: Date;
 }

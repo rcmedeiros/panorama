@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+import { GitlabEvent, GitlabProject } from '../../../model';
 import needle, { NeedleResponse } from 'needle';
 
 import { GitlabDAO } from '../gitlab-dao';
-import { GitlabEvent } from '../../../model';
 
 export class GitlabDAOImpl implements GitlabDAO {
   private readonly API: string = 'https://gitlab.com/api/v4';
@@ -38,5 +37,26 @@ export class GitlabDAOImpl implements GitlabDAO {
     d.setMilliseconds(0);
 
     return result.filter((e: GitlabEvent) => e.created_at.getTime() >= d.getTime());
+  }
+
+  public async getProjectNames(page: number = 1): Promise<Array<string>> {
+    const r: NeedleResponse = await needle(
+      'get',
+      `${this.API}/projects?page=${page}&simple=true&per_page=100&membership=true&${this.TOKEN_ARG}`,
+      {
+        compressed: true,
+        follow_max: 5,
+      },
+      {
+        headers: { 'content-type': 'application/json' },
+      },
+    );
+
+    let result: Array<string> = (r.body as Array<GitlabProject>).map((p: GitlabProject) => p.path);
+    if (r.headers['x-next-page']) {
+      result = result.concat(await this.getProjectNames(parseInt(r.headers['x-next-page'] as string)));
+    }
+
+    return result;
   }
 }

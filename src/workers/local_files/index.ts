@@ -1,5 +1,5 @@
-import { DataAccessFactory, LocalFile, LocalFileDAO, Member, MemberDAO, OneDriveDAO } from '../../model';
-import { isProduction, waitFor } from '../../helpers';
+import { DataAccessFactory, GitlabDAO, LocalFile, LocalFileDAO, Member, MemberDAO, OneDriveDAO } from '../../model';
+import { isProduction, waitFor, waitUntil } from '../../helpers';
 
 import { OneDrive } from './one_drive_delta';
 
@@ -7,20 +7,35 @@ export class LocalFiles {
   private readonly memberDAO: MemberDAO;
   private readonly localFileDAO: LocalFileDAO;
   private readonly oneDriveDAO: OneDriveDAO;
+  private readonly gitlabDAO: GitlabDAO;
   private readonly oneDrive: OneDrive;
   private readonly deltaLink: Record<string, string>;
   private readonly memberCounter: Set<string>;
   private filesCounter: number = 0;
+  private projects: Set<string>;
 
   public constructor() {
     this.memberDAO = DataAccessFactory.getMemberDAO();
     this.localFileDAO = DataAccessFactory.getLocalFileDAO();
     this.oneDriveDAO = DataAccessFactory.getOneDriveDAO();
+    this.gitlabDAO = DataAccessFactory.getGitlabDAO();
     this.oneDrive = new OneDrive(this.oneDriveDAO);
 
     this.deltaLink = {};
     this.memberCounter = new Set();
     this.filesCounter = 0;
+
+    void this.refreshProjects();
+  }
+
+  private async refreshProjects(): Promise<void> {
+    this.projects = new Set(await this.gitlabDAO.getProjectNames());
+    this.projects.add('panorama');
+    setTimeout(() => {
+      void (async (): Promise<void> => {
+        await this.refreshProjects();
+      })();
+    }, 3600000);
   }
 
   private async setupDrive(member: Member): Promise<void> {
@@ -45,9 +60,23 @@ export class LocalFiles {
     }
   }
 
+  private withProject(localFile: LocalFile): LocalFile {
+    const path: Array<string> = localFile.fileName.split('/').reverse();
+
+    for (const component of path) {
+      if (this.projects.has(component)) {
+        localFile.project = component;
+        break;
+      }
+    }
+
+    return localFile;
+  }
+
   public start(): void {
     void (async (): Promise<void> => {
       await this.memberDAO.isReady();
+      await waitUntil(() => this.projects !== undefined);
 
       const members: Array<Member> = await this.memberDAO.getMembers(true);
 
@@ -72,7 +101,7 @@ export class LocalFiles {
 
               void (async (): Promise<void> => {
                 await Promise.all([
-                  this.localFileDAO.insertFile({ ...update, ...{ member: member.username } }),
+                  this.localFileDAO.insertFile({ ...this.withProject(update), ...{ member: member.username } }),
                   this.memberDAO.updateDeltaLink(member.username, this.deltaLink[member.username]),
                 ]);
               })();

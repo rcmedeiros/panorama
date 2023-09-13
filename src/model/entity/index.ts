@@ -8,3 +8,4 @@ export * from './stats_args';
 export * from './tuple';
 export * from './gitlab_event';
 export * from './gitlab_event_author';
+export * from './gitlab_project';

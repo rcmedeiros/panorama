@@ -5,7 +5,7 @@ export class LocalFileDTO extends DTO implements LocalFile {
   private _id: number;
   private _member: string;
   private _fileName: string;
-  private _project: number;
+  private _project: string;
   private _timestamp: Date;
 
   public get id(): number {
@@ -29,10 +29,10 @@ export class LocalFileDTO extends DTO implements LocalFile {
     this._fileName = value;
   }
 
-  public get project(): number {
+  public get project(): string {
     return this._project;
   }
-  public set project(value: number) {
+  public set project(value: string) {
     this._project = value;
   }
 
