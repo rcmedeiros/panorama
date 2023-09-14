@@ -5,6 +5,7 @@ import express, { NextFunction, Request, Response } from 'express';
 
 import { DashboardView } from './web/pages/dashboard_view';
 import { LocalFiles } from './workers/local_files';
+import { SQLLogScanner } from './workers/sql_log_scanner';
 import compression from 'compression';
 import cors from 'cors';
 import crypto from 'crypto';
@@ -48,6 +49,7 @@ if (isProduction()) {
 }
 
 const localFiles: LocalFiles = new LocalFiles();
+const sqlLogScanner: SQLLogScanner = new SQLLogScanner();
 
 const started: Promise<core.Express> = new Promise((resolve: Resolution<core.Express>, reject: Rejection): void => {
   void (async (): Promise<void> => {
@@ -55,6 +57,7 @@ const started: Promise<core.Express> = new Promise((resolve: Resolution<core.Exp
       .listen(80)
       .once('listening', () => {
         localFiles.start();
+        sqlLogScanner.scan();
         resolve(app);
         console.info(
           figlet.textSync('Panorama', {
