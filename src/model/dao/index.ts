@@ -5,3 +5,4 @@ export * from './sql_query-dao';
 export * from './base-dao';
 export * from './one_drive-dao';
 export * from './gitlab-dao';
+export * from './config-dao';

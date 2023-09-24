@@ -1,4 +1,5 @@
 import {
+  ConfigDAO,
   GitlabDAO,
   GitlabDAOImpl,
   LocalFileDAO,
@@ -10,6 +11,8 @@ import {
   SQLQueryDAO,
   SQLQueryDAOImpl,
 } from '.';
+
+import { ConfigDAOImpl } from './dao/dao_impl/config-dao_impl';
 
 export class DataAccessFactory {
   public static getMemberDAO(): MemberDAO {
@@ -30,5 +33,9 @@ export class DataAccessFactory {
 
   public static getGitlabDAO(): GitlabDAO {
     return new GitlabDAOImpl();
+  }
+
+  public static getConfigDAO(): ConfigDAO {
+    return new ConfigDAOImpl();
   }
 }

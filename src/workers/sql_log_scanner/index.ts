@@ -1,4 +1,5 @@
 /* eslint-disable no-null/no-null */
+import { DB_INSTANCE, DB_REGION, DB_SYS_USERS_TO_IGNORE } from '../../constants';
 import { DataAccessFactory, Member, MemberDAO } from '../../model';
 import {
   DescribeDBLogFilesCommand,
@@ -9,23 +10,25 @@ import {
   RDSClient,
 } from '@aws-sdk/client-rds';
 
+import { Config } from '../../core';
+
 type Counter = { dbUsername?: string; username: string; counter: number };
 
 export class SQLLogScanner {
   private static readonly REGEX = new RegExp(/([^:]+)(?=@orchestra:)/g);
-  private static readonly SYS_USERS_TO_IGNORE = process.env.DB_SYS_USERS_TO_IGNORE ? process.env.DB_SYS_USERS_TO_IGNORE.split(',') : [];
+  private static readonly SYS_USERS_TO_IGNORE = Config.get(DB_SYS_USERS_TO_IGNORE) ? Config.get(DB_SYS_USERS_TO_IGNORE).split(',') : [];
   private readonly memberDAO: MemberDAO;
   private readonly client: RDSClient;
 
   public constructor() {
     this.memberDAO = DataAccessFactory.getMemberDAO();
-    this.client = new RDSClient({ region: process.env.DB_REGION });
+    this.client = new RDSClient({ region: Config.get(DB_REGION) });
   }
 
   private async getLogFilesNames(since: Date, marker?: string): Promise<Array<DescribeDBLogFilesDetails>> {
     const response: DescribeDBLogFilesCommandOutput = await this.client.send(
       new DescribeDBLogFilesCommand({
-        DBInstanceIdentifier: process.env.DB_INSTANCE,
+        DBInstanceIdentifier: Config.get(DB_INSTANCE),
         FileLastWritten: since.getTime(),
         Marker: marker,
       }),
@@ -42,7 +45,7 @@ export class SQLLogScanner {
     console.debug(`${fileName} @ ${marker}`);
     const response: DownloadDBLogFilePortionCommandOutput = await this.client.send(
       new DownloadDBLogFilePortionCommand({
-        DBInstanceIdentifier: process.env.DB_INSTANCE,
+        DBInstanceIdentifier: Config.get(DB_INSTANCE),
         LogFileName: fileName,
         NumberOfLines: 10000,
         Marker: marker || '0',

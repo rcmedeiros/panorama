@@ -1,11 +1,13 @@
 import { GitlabEvent, GitlabProject } from '../../../model';
 import needle, { NeedleResponse } from 'needle';
 
+import { Config } from '../../../core';
+import { GITLAB_TOKEN } from '../../../constants';
 import { GitlabDAO } from '../gitlab-dao';
 
 export class GitlabDAOImpl implements GitlabDAO {
   private readonly API: string = 'https://gitlab.com/api/v4';
-  private readonly TOKEN_ARG: string = `private_token=${process.env.GITLAB_TOKEN}`;
+  private readonly TOKEN_ARG: string = `private_token=${Config.get(GITLAB_TOKEN)}`;
 
   public async getTodaysEvents(userId: number): Promise<Array<GitlabEvent>> {
     const d: Date = new Date();

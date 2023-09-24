@@ -1,3 +1,6 @@
+import { OD_CLIENT_ID, OD_CLIENT_SECRET, OD_TENANT } from '../../../constants/variables';
+
+import { Config } from '../../../core';
 import needle from 'needle';
 
 type Login = {
@@ -13,9 +16,9 @@ export class OneDriveAuth {
   private readonly clientSecret: string;
 
   public constructor() {
-    this.tenant = process.env.OD_TENANT;
-    this.clientId = process.env.OD_CLIENT_ID;
-    this.clientSecret = process.env.OD_CLIENT_SECRET;
+    this.tenant = Config.get(OD_TENANT);
+    this.clientId = Config.get(OD_CLIENT_ID);
+    this.clientSecret = Config.get(OD_CLIENT_SECRET);
 
     this.expires = 0;
   }

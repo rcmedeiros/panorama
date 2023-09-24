@@ -2,6 +2,9 @@ import * as redis from 'redis';
 
 import { Rejection, Resolution } from '../types';
 
+import { CACHE } from '../constants';
+import { Config } from '../core';
+
 type RedisClient = ReturnType<typeof redis.createClient>;
 
 export class RedisAdapter {
@@ -23,7 +26,7 @@ export class RedisAdapter {
       void (async (): Promise<void> => {
         try {
           if (!this.client?.isOpen) {
-            this.client = redis.createClient({ url: process.env.CACHE });
+            this.client = redis.createClient({ url: Config.get(CACHE) });
             await this.client.connect();
             this.client.on('error', (err: Error) => {
               console.error('Redis Client Error', err);
