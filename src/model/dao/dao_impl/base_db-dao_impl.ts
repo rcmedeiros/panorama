@@ -1,4 +1,5 @@
-import { PostgreSQLAdapter } from '../../../adapters';
+import { PostgreSQLAdapter, SQLTransaction } from '../../../adapters';
+
 import { waitUntil } from '../../../helpers';
 
 export class BaseDbDAOImpl {
@@ -6,6 +7,10 @@ export class BaseDbDAOImpl {
 
   public constructor() {
     this.db = PostgreSQLAdapter.getInstance(process.env.DB);
+  }
+
+  public createTransaction(): SQLTransaction {
+    return this.db.createTransaction();
   }
 
   public async isReady(): Promise<void> {

@@ -1,11 +1,8 @@
 import { Pool, PoolClient } from 'pg';
 import { Rejection, Resolution } from '../types';
 
-interface QueryObject {
-  name: string;
-  text: string;
-  values: Array<unknown>;
-}
+import { QueryObject } from './query_object';
+import { SQLTransaction } from './sql_transaction';
 
 export class PostgreSQLAdapter {
   private static instance: PostgreSQLAdapter;
@@ -35,6 +32,10 @@ export class PostgreSQLAdapter {
   public static getInstance(connectionString: string): PostgreSQLAdapter {
     if (!this.instance) this.instance = new PostgreSQLAdapter(connectionString);
     return this.instance;
+  }
+
+  public createTransaction(): SQLTransaction {
+    return new SQLTransaction(this._pool);
   }
 
   public async executeQuery(query: QueryObject): Promise<number | Array<unknown>> {

@@ -12,6 +12,7 @@ import {
 
 import { Config } from '../../core';
 
+type QueryCount = { username: string; inserts: Record<number, number> };
 type Register = (digest: Array<[Date, Array<string>]>, latest: Date) => void;
 
 export class SQLLogScanner {
@@ -172,19 +173,23 @@ export class SQLLogScanner {
 
       const hoursTable: Map<number, Map<string, number>> = this.splitHours(minutesTable);
 
-      const finalCountdown: { [dbUsername: string]: { username: string; inserts: Map<number, number> } } = {};
+      const finalCount: Record<string, QueryCount> = {};
       members.forEach((member: Member) => {
-        finalCountdown[member.dbUsername] = { username: member.username, inserts: new Map() };
+        finalCount[member.dbUsername] = { username: member.username, inserts: {} };
       });
 
       for (const [hour, map] of hoursTable) {
         for (const [dbUsername, count] of map) {
-          const sum: number = (finalCountdown[dbUsername].inserts.get(hour) || 0) + count;
-          finalCountdown[dbUsername].inserts.set(hour, sum);
+          const sum: number = (finalCount[dbUsername].inserts[hour] || 0) + count;
+          finalCount[dbUsername].inserts[hour] = sum;
         }
       }
 
-      console.debug(JSON.stringify(finalCountdown, null, 4));
+      const t: Array<QueryCount> = Object.values(finalCount).filter((queryCount: QueryCount) => !!Object.keys(queryCount.inserts).length);
+
+      console.debug(t);
+
+      console.debug(JSON.stringify(finalCount, null, 4));
     })();
   }
 }
