@@ -1,5 +1,7 @@
 import {
   ConfigDAO,
+  DbQueryDAO,
+  DbQueryDAOImpl,
   GitlabDAO,
   GitlabDAOImpl,
   LocalFileDAO,
@@ -8,8 +10,6 @@ import {
   MemberDAOImpl,
   OneDriveDAO,
   OneDriveDAOImpl,
-  SQLQueryDAO,
-  SQLQueryDAOImpl,
 } from '.';
 
 import { ConfigDAOImpl } from './dao/dao_impl/config-dao_impl';
@@ -23,8 +23,8 @@ export class DataAccessFactory {
     return new LocalFileDAOImpl();
   }
 
-  public static getSqlQueryDAO(): SQLQueryDAO {
-    return new SQLQueryDAOImpl();
+  public static getSqlQueryDAO(): DbQueryDAO {
+    return new DbQueryDAOImpl();
   }
 
   public static getOneDriveDAO(): OneDriveDAO {
