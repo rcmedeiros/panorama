@@ -6,3 +6,4 @@ export const GITLAB_TOKEN: string = 'GITLAB_TOKEN';
 export const DB_INSTANCE: string = 'DB_INSTANCE';
 export const DB_REGION: string = 'DB_REGION';
 export const DB_SYS_USERS_TO_IGNORE: string = 'DB_SYS_USERS_TO_IGNORE';
+export const LAST_SQL_SCAN: string = 'LAST_SQL_SCAN';

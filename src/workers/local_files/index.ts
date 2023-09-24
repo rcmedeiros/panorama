@@ -30,7 +30,6 @@ export class LocalFiles {
 
   private async refreshProjects(): Promise<void> {
     this.projects = new Set(await this.gitlabDAO.getProjectNames());
-    this.projects.add('panorama');
     setTimeout(() => {
       void (async (): Promise<void> => {
         await this.refreshProjects();

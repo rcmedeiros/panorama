@@ -17,7 +17,7 @@ export class ConfigDAOImpl extends BaseDbDAOImpl implements ConfigDAO {
   public async set(name: string, value: string): Promise<void> {
     await this.db.executeQuery({
       name: 'config.set',
-      text: 'update main.config set value = $2 where name = $1',
+      text: 'insert into main.config (name, value) values ($1, $2) on conflict (name) do update set value = excluded.value',
       values: [name, value],
     });
   }

@@ -1,5 +1,5 @@
 /* eslint-disable no-null/no-null */
-import { DB_INSTANCE, DB_REGION, DB_SYS_USERS_TO_IGNORE } from '../../constants';
+import { DB_INSTANCE, DB_REGION, DB_SYS_USERS_TO_IGNORE, LAST_SQL_SCAN } from '../../constants';
 import { DataAccessFactory, Member, MemberDAO } from '../../model';
 import {
   DescribeDBLogFilesCommand,
@@ -12,10 +12,12 @@ import {
 
 import { Config } from '../../core';
 
-type Counter = { dbUsername?: string; username: string; counter: number };
+type Register = (digest: Array<[Date, Array<string>]>, latest: Date) => void;
 
 export class SQLLogScanner {
-  private static readonly REGEX = new RegExp(/([^:]+)(?=@orchestra:)/g);
+  private static readonly RX_ANONYMOUS = new RegExp(/::@:|:postgres@|:postgress@|\[unknown\]/);
+  private static readonly RX_UTC = new RegExp(/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} UTC)/);
+  private static readonly RX_USERNAME = new RegExp(/^(?:[^:]*:){4}([^@]*)@/);
   private static readonly SYS_USERS_TO_IGNORE = Config.get(DB_SYS_USERS_TO_IGNORE) ? Config.get(DB_SYS_USERS_TO_IGNORE).split(',') : [];
   private readonly memberDAO: MemberDAO;
   private readonly client: RDSClient;
@@ -23,6 +25,13 @@ export class SQLLogScanner {
   public constructor() {
     this.memberDAO = DataAccessFactory.getMemberDAO();
     this.client = new RDSClient({ region: Config.get(DB_REGION) });
+  }
+
+  private async firstScan(): Promise<string> {
+    const result: Date = new Date();
+    result.setHours(0, 0, 0, 0);
+    await Config.set(LAST_SQL_SCAN, result.toISOString());
+    return result.toISOString();
   }
 
   private async getLogFilesNames(since: Date, marker?: string): Promise<Array<DescribeDBLogFilesDetails>> {
@@ -41,7 +50,46 @@ export class SQLLogScanner {
     return response.DescribeDBLogFiles;
   }
 
-  private async scanLogContent(fileName: string, matcher: (content: string) => void, marker?: string): Promise<void> {
+  private roundMinutes(d: Date): Date {
+    const result: Date = new Date(d);
+    result.setSeconds(0);
+    result.setMilliseconds(0);
+    return result;
+  }
+
+  private digestLines(content: string, since: Date): [Array<[Date, Array<string>]>, Date] {
+    const lines: Array<[Date, string]> = content
+      .split('\n')
+      .filter((line: string) => !SQLLogScanner.RX_ANONYMOUS.test(line) && SQLLogScanner.RX_UTC.test(line))
+      .filter((line: string) => new Date(line.substring(0, 23)).getTime() >= since.getTime())
+      .map((line: string) => [new Date(line.substring(0, 23)), line.match(SQLLogScanner.RX_USERNAME)[1]]);
+    let latest: Date = new Date(0);
+
+    const preResult: Array<[Date, Set<string>]> = [];
+    if (lines.length) {
+      let currentDate: Date = this.roundMinutes(lines[0][0]);
+
+      preResult.push([currentDate, new Set()]);
+
+      while (lines.length) {
+        const line: [Date, string] = lines.shift();
+        latest = new Date(Math.max(latest.getTime(), line[0].getTime()));
+
+        const date: Date = this.roundMinutes(line[0]);
+        if (date.getTime() === currentDate.getTime()) {
+          preResult[preResult.length - 1][1].add(line[1]);
+        } else {
+          preResult.push([date, new Set([line[1]])]);
+          currentDate = date;
+        }
+      }
+    }
+
+    const result: Array<[Date, Array<string>]> = preResult.map((record: [Date, Set<string>]) => [record[0], Array.from(record[1])]);
+    return [result, latest];
+  }
+
+  private async scanLogContent(fileName: string, since: Date, register: Register, marker?: string): Promise<void> {
     console.debug(`${fileName} @ ${marker}`);
     const response: DownloadDBLogFilePortionCommandOutput = await this.client.send(
       new DownloadDBLogFilePortionCommand({
@@ -52,48 +100,91 @@ export class SQLLogScanner {
       }),
     );
 
-    matcher(response.LogFileData);
+    const digest: [Array<[Date, Array<string>]>, Date] = this.digestLines(response.LogFileData, since);
+
+    register(digest[0], digest[1]);
 
     if (response.AdditionalDataPending) {
-      await this.scanLogContent(fileName, matcher, response.Marker);
+      await this.scanLogContent(fileName, since, register, response.Marker);
     }
   }
 
+  private splitHours(timeTable: Map<number, Set<string>>): Map<number, Map<string, number>> {
+    const resultTable: Map<number, Map<string, number>> = new Map();
+
+    for (const [date, usernames] of timeTable.entries()) {
+      const hourDate: Date = new Date(date);
+      hourDate.setMinutes(0, 0, 0);
+      const epochTime: number = hourDate.getTime();
+
+      if (!resultTable.has(epochTime)) {
+        resultTable.set(epochTime, new Map<string, number>());
+      }
+
+      const hourMap: Map<string, number> = resultTable.get(epochTime);
+
+      for (const username of usernames) {
+        if (!hourMap.has(username)) {
+          hourMap.set(username, 1);
+        } else {
+          hourMap.set(username, (hourMap.get(username) || 0) + 1);
+        }
+      }
+    }
+    return resultTable;
+  }
+
   public scan(): void {
-    return;
     void (async (): Promise<void> => {
       await this.memberDAO.isReady();
 
       const members: Array<Member> = await this.memberDAO.getMembers(true);
 
-      const counters: { [dbUsername: string]: Counter } = {};
-      members.forEach((member: Member) => {
-        counters[member.dbUsername] = { username: member.username, counter: 0 };
-      });
-
       console.debug('Starting SQL monitoring...');
 
-      const since: Date = new Date();
-      since.setHours(since.getHours() - 1);
+      const lastScan: string = Config.get(LAST_SQL_SCAN) || (await this.firstScan());
+      const since: Date = new Date(lastScan);
+
+      const minutesTable: Map<number, Set<string>> = new Map();
 
       const files: Array<DescribeDBLogFilesDetails> = await this.getLogFilesNames(since);
+      let totalLatest: Date = new Date(0);
+
       await Promise.all(
         files.map(async (file: DescribeDBLogFilesDetails) =>
-          this.scanLogContent(file.LogFileName, (content: string) => {
-            const matches: Array<string> = [];
-            let match: RegExpExecArray;
-            while ((match = SQLLogScanner.REGEX.exec(content)) !== null) {
-              if (!SQLLogScanner.SYS_USERS_TO_IGNORE.includes(match[1])) matches.push(match[1]);
-            }
-
-            matches.forEach((dbUsername: string) => {
-              counters[dbUsername].counter++;
+          this.scanLogContent(file.LogFileName, since, (digest: Array<[Date, Array<string>]>, latest: Date) => {
+            totalLatest = new Date(Math.max(latest.getTime(), totalLatest.getTime()));
+            digest.forEach((record: [Date, Array<string>]) => {
+              record[1].forEach((dbUsername: string) => {
+                if (!SQLLogScanner.SYS_USERS_TO_IGNORE.includes(dbUsername)) {
+                  if (!minutesTable.has(record[0].getTime())) {
+                    minutesTable.set(record[0].getTime(), new Set());
+                  }
+                  minutesTable.get(record[0].getTime()).add(dbUsername);
+                }
+              });
             });
           }),
         ),
       );
 
-      console.debug(JSON.stringify(counters, null, 4));
+      console.debug(totalLatest);
+
+      const hoursTable: Map<number, Map<string, number>> = this.splitHours(minutesTable);
+
+      const finalCountdown: { [dbUsername: string]: { username: string; inserts: Map<number, number> } } = {};
+      members.forEach((member: Member) => {
+        finalCountdown[member.dbUsername] = { username: member.username, inserts: new Map() };
+      });
+
+      for (const [hour, map] of hoursTable) {
+        for (const [dbUsername, count] of map) {
+          const sum: number = (finalCountdown[dbUsername].inserts.get(hour) || 0) + count;
+          finalCountdown[dbUsername].inserts.set(hour, sum);
+        }
+      }
+
+      console.debug(JSON.stringify(finalCountdown, null, 4));
     })();
   }
 }
