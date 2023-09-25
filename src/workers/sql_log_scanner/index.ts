@@ -1,6 +1,6 @@
+import { ConfigDAO, DataAccessFactory, DbQueries, DbQueryDAO, Member, MemberDAO } from '../../model';
 /* eslint-disable no-null/no-null */
 import { DB_INSTANCE, DB_REGION, DB_SYS_USERS_TO_IGNORE, LAST_SQL_SCAN } from '../../constants';
-import { DataAccessFactory, Member, MemberDAO } from '../../model';
 import {
   DescribeDBLogFilesCommand,
   DescribeDBLogFilesCommandOutput,
@@ -11,6 +11,7 @@ import {
 } from '@aws-sdk/client-rds';
 
 import { Config } from '../../core';
+import { SQLTransaction } from '../../adapters';
 
 type QueryCount = { username: string; inserts: Record<number, number> };
 type Register = (digest: Array<[Date, Array<string>]>, latest: Date) => void;
@@ -19,12 +20,17 @@ export class SQLLogScanner {
   private static readonly RX_ANONYMOUS = new RegExp(/::@:|:postgres@|:postgress@|\[unknown\]/);
   private static readonly RX_UTC = new RegExp(/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} UTC)/);
   private static readonly RX_USERNAME = new RegExp(/^(?:[^:]*:){4}([^@]*)@/);
-  private static readonly SYS_USERS_TO_IGNORE = Config.get(DB_SYS_USERS_TO_IGNORE) ? Config.get(DB_SYS_USERS_TO_IGNORE).split(',') : [];
+  private readonly usersToIgnore;
   private readonly memberDAO: MemberDAO;
+  private readonly dbQueryDAO: DbQueryDAO;
+  private readonly configDAO: ConfigDAO;
   private readonly client: RDSClient;
 
   public constructor() {
+    this.usersToIgnore = Config.get(DB_SYS_USERS_TO_IGNORE) ? Config.get(DB_SYS_USERS_TO_IGNORE).split(',') : [];
     this.memberDAO = DataAccessFactory.getMemberDAO();
+    this.dbQueryDAO = DataAccessFactory.getDbQueryDAO();
+    this.configDAO = DataAccessFactory.getConfigDAO();
     this.client = new RDSClient({ region: Config.get(DB_REGION) });
   }
 
@@ -135,13 +141,29 @@ export class SQLLogScanner {
     return resultTable;
   }
 
+  private async persist(dbQueries: Array<DbQueries>, totalLatest: Date): Promise<void> {
+    const transaction: SQLTransaction = this.dbQueryDAO.createTransaction();
+    try {
+      await transaction.begin();
+      await Promise.all(
+        dbQueries
+          .map(async (queries: DbQueries) => this.dbQueryDAO.registerCounts(queries, transaction))
+          .concat([this.configDAO.set(LAST_SQL_SCAN, totalLatest.toISOString(), transaction)]),
+      );
+      await transaction.commit();
+    } catch (e) {
+      await transaction.rollback();
+      console.error(e);
+    }
+  }
+
   public scan(): void {
     void (async (): Promise<void> => {
       await this.memberDAO.isReady();
 
       const members: Array<Member> = await this.memberDAO.getMembers(true);
 
-      console.debug('Starting SQL monitoring...');
+      console.info('Starting SQL monitoring...');
 
       const lastScan: string = Config.get(LAST_SQL_SCAN) || (await this.firstScan());
       const since: Date = new Date(lastScan);
@@ -157,7 +179,7 @@ export class SQLLogScanner {
             totalLatest = new Date(Math.max(latest.getTime(), totalLatest.getTime()));
             digest.forEach((record: [Date, Array<string>]) => {
               record[1].forEach((dbUsername: string) => {
-                if (!SQLLogScanner.SYS_USERS_TO_IGNORE.includes(dbUsername)) {
+                if (!this.usersToIgnore.includes(dbUsername)) {
                   if (!minutesTable.has(record[0].getTime())) {
                     minutesTable.set(record[0].getTime(), new Set());
                   }
@@ -168,8 +190,6 @@ export class SQLLogScanner {
           }),
         ),
       );
-
-      console.debug(totalLatest);
 
       const hoursTable: Map<number, Map<string, number>> = this.splitHours(minutesTable);
 
@@ -185,11 +205,24 @@ export class SQLLogScanner {
         }
       }
 
-      const t: Array<QueryCount> = Object.values(finalCount).filter((queryCount: QueryCount) => !!Object.keys(queryCount.inserts).length);
+      const dbQueries: Array<DbQueries> = [];
+      Object.values(finalCount)
+        .filter((queryCount: QueryCount) => !!Object.keys(queryCount.inserts).length)
+        .forEach((queryCount: QueryCount) => {
+          Object.entries(queryCount.inserts).forEach(([hour, count]: [string, number]) => {
+            dbQueries.push({
+              member: queryCount.username,
+              dateTime: new Date(parseInt(hour)),
+              queries: count,
+            });
+          });
+        });
 
-      console.debug(t);
-
-      console.debug(JSON.stringify(finalCount, null, 4));
+      await this.persist(dbQueries, totalLatest);
     })();
+
+    setTimeout(() => {
+      this.scan();
+    }, 60000);
   }
 }

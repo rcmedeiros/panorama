@@ -23,7 +23,7 @@ export class DataAccessFactory {
     return new LocalFileDAOImpl();
   }
 
-  public static getSqlQueryDAO(): DbQueryDAO {
+  public static getDbQueryDAO(): DbQueryDAO {
     return new DbQueryDAOImpl();
   }
 

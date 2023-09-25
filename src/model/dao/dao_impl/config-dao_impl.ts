@@ -1,5 +1,6 @@
 import { BaseDbDAOImpl } from './base_db-dao_impl';
 import { ConfigDAO } from '../config-dao';
+import { SQLTransaction } from '../../../adapters';
 
 type NameValue = { name: string; value: string };
 
@@ -14,8 +15,8 @@ export class ConfigDAOImpl extends BaseDbDAOImpl implements ConfigDAO {
     return rows.map((r: NameValue) => [r.name, r.value]);
   }
 
-  public async set(name: string, value: string): Promise<void> {
-    await this.db.executeQuery({
+  public async set(name: string, value: string, transaction?: SQLTransaction): Promise<void> {
+    await (transaction || this.db).executeQuery({
       name: 'config.set',
       text: 'insert into main.config (name, value) values ($1, $2) on conflict (name) do update set value = excluded.value',
       values: [name, value],
