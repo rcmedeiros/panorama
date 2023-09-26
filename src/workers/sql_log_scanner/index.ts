@@ -124,6 +124,7 @@ export class SQLLogScanner {
   }
 
   private splitHours(timeTable: Map<number, Set<string>>): Map<number, Map<string, number>> {
+    console.debug(JSON.stringify(timeTable));
     const resultTable: Map<number, Map<string, number>> = new Map();
 
     for (const [date, usernames] of timeTable.entries()) {

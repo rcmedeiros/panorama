@@ -85,7 +85,7 @@ export class LocalFiles {
         }
       }
 
-      console.debug('Starting OneDrive monitoring...');
+      console.info('Starting OneDrive monitoring...');
 
       members.forEach((member: Member) => {
         this.deltaLink[member.username] = member.deltaLink || 'latest';
