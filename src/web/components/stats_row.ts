@@ -35,12 +35,6 @@ export class StatsRowComponent implements WebComponent {
                 backgroundColor: '#34A1EA',
               },
               {
-                label: 'Intellij',
-                data: ${this.args.intellij ? JSON.stringify(this.args.intellij) : this.blank},
-                backgroundColor: '#000000',
-                hidden: true,
-              },
-              {
                 label: 'Gitlab',
                 data: ${this.args.gitEvents ? JSON.stringify(this.args.gitEvents) : this.blank},
                 backgroundColor: '#DB4128',
