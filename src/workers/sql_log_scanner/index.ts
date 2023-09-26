@@ -113,9 +113,10 @@ export class SQLLogScanner {
       }),
     );
 
-    const digest: [Array<[Date, Array<string>]>, Date] = this.digestLines(response.LogFileData, since);
-
-    register(digest[0], digest[1]);
+    if (response.LogFileData) {
+      const digest: [Array<[Date, Array<string>]>, Date] = this.digestLines(response.LogFileData, since);
+      register(digest[0], digest[1]);
+    }
 
     if (response.AdditionalDataPending) {
       await this.scanLogContent(fileName, since, register, response.Marker);
