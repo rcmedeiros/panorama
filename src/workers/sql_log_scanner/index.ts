@@ -208,8 +208,12 @@ export class SQLLogScanner {
 
       for (const [hour, map] of hoursTable) {
         for (const [dbUsername, count] of map) {
-          const sum: number = (finalCount[dbUsername].inserts[hour] || 0) + count;
-          finalCount[dbUsername].inserts[hour] = sum;
+          if (finalCount[dbUsername]) {
+            const sum: number = (finalCount[dbUsername].inserts[hour] || 0) + count;
+            finalCount[dbUsername].inserts[hour] = sum;
+          } else {
+            console.warn(`${dbUsername} should be ignored`);
+          }
         }
       }
 
