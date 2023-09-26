@@ -1,6 +1,6 @@
-import { ConfigDAO, DataAccessFactory, DbQueries, DbQueryDAO, Member, MemberDAO } from '../../model';
 /* eslint-disable no-null/no-null */
-import { DB_INSTANCE, DB_REGION, DB_SYS_USERS_TO_IGNORE, LAST_SQL_SCAN } from '../../constants';
+import { AWS_ACCESS_KEY_ID, DB_INSTANCE, DB_REGION, DB_SYS_USERS_TO_IGNORE, LAST_SQL_SCAN, SECRET_ACCESS_KEY } from '../../constants';
+import { ConfigDAO, DataAccessFactory, DbQueries, DbQueryDAO, Member, MemberDAO } from '../../model';
 import {
   DescribeDBLogFilesCommand,
   DescribeDBLogFilesCommandOutput,
@@ -31,7 +31,13 @@ export class SQLLogScanner {
     this.memberDAO = DataAccessFactory.getMemberDAO();
     this.dbQueryDAO = DataAccessFactory.getDbQueryDAO();
     this.configDAO = DataAccessFactory.getConfigDAO();
-    this.client = new RDSClient({ region: Config.get(DB_REGION) });
+    this.client = new RDSClient({
+      region: Config.get(DB_REGION),
+      credentials: {
+        accessKeyId: Config.get(AWS_ACCESS_KEY_ID),
+        secretAccessKey: Config.get(SECRET_ACCESS_KEY),
+      },
+    });
   }
 
   private async firstScan(): Promise<string> {

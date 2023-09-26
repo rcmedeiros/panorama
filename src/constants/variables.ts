@@ -7,3 +7,5 @@ export const DB_INSTANCE: string = 'DB_INSTANCE';
 export const DB_REGION: string = 'DB_REGION';
 export const DB_SYS_USERS_TO_IGNORE: string = 'DB_SYS_USERS_TO_IGNORE';
 export const LAST_SQL_SCAN: string = 'LAST_SQL_SCAN';
+export const AWS_ACCESS_KEY_ID: string = 'AWS_ACCESS_KEY_ID';
+export const SECRET_ACCESS_KEY: string = 'SECRET_ACCESS_KEY';
