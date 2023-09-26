@@ -219,10 +219,11 @@ export class SQLLogScanner {
         });
 
       await this.persist(dbQueries, totalLatest);
-    })();
 
-    setTimeout(() => {
-      this.scan();
-    }, 60000);
+      setTimeout(() => {
+        console.debug(`${new Date().toDateString()} re-scan...`);
+        this.scan();
+      }, 60000);
+    })();
   }
 }
