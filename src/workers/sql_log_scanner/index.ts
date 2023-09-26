@@ -164,6 +164,7 @@ export class SQLLogScanner {
   }
 
   public scan(): void {
+    return;
     void (async (): Promise<void> => {
       await this.memberDAO.isReady();
 

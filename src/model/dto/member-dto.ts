@@ -1,4 +1,4 @@
-import { LocalFile, Member } from '..';
+import { DbQueries, LocalFile, Member } from '..';
 
 import { DTO } from './dto';
 
@@ -12,6 +12,7 @@ export class MemberDTO extends DTO implements Member {
   private _deltaLink?: string;
   private _gitlabId: number;
   private _localFiles?: Array<LocalFile>;
+  private _dbQueries?: Array<DbQueries>;
 
   public get username(): string {
     return this._username;
@@ -76,5 +77,14 @@ export class MemberDTO extends DTO implements Member {
   }
   public set localFiles(value: Array<LocalFile>) {
     this._localFiles = value;
+  }
+
+  public get dbQueries(): Array<DbQueries> {
+    if (!this._dbQueries) this._dbQueries = [];
+
+    return this._dbQueries;
+  }
+  public set dbQueries(value: Array<DbQueries>) {
+    this._dbQueries = value;
   }
 }

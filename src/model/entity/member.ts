@@ -1,3 +1,4 @@
+import { DbQueries } from './db_queries';
 import { LocalFile } from './local_file';
 
 export interface Member {
@@ -10,4 +11,5 @@ export interface Member {
   deltaLink?: string;
   gitlabId: number;
   localFiles?: Array<LocalFile>;
+  dbQueries?: Array<DbQueries>;
 }
