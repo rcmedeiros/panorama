@@ -73,7 +73,6 @@ export class LocalFiles {
   }
 
   public start(): void {
-    return;
     void (async (): Promise<void> => {
       await this.memberDAO.isReady();
       await waitUntil(() => this.projects !== undefined);

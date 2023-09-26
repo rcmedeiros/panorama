@@ -109,8 +109,8 @@ export class MemberDAOImpl extends BaseDbDAOImpl implements MemberDAO {
 
     rows.forEach((row: Record<string, unknown>) => {
       currMember = this.readMember(row, currMember, result);
-      currLocalFile = this.readLocalFile(row, currMember, currLocalFile);
-      currDbQueries = this.readDbQueries(row, currMember, currDbQueries);
+      if (row.lf_id) currLocalFile = this.readLocalFile(row, currMember, currLocalFile);
+      if (row.dq_id) currDbQueries = this.readDbQueries(row, currMember, currDbQueries);
     });
 
     return result;

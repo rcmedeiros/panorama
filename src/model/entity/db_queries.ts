@@ -1,6 +1,6 @@
 export interface DbQueries {
   id?: number;
   member: string;
-  dateTime: Date;
+  datetime: Date;
   queries: number;
 }

@@ -4,7 +4,7 @@ import { DbQueries } from '..';
 export class DbQueriesDTO extends DTO implements DbQueries {
   private _id: number;
   private _member: string;
-  private _dateTime: Date;
+  private _datetime: Date;
   private _queries: number;
 
   public get id(): number {
@@ -21,11 +21,11 @@ export class DbQueriesDTO extends DTO implements DbQueries {
     this._member = value;
   }
 
-  public get dateTime(): Date {
-    return this._dateTime;
+  public get datetime(): Date {
+    return this._datetime;
   }
-  public set dateTime(value: Date) {
-    this._dateTime = value;
+  public set datetime(value: Date) {
+    this._datetime = value;
   }
 
   public get queries(): number {

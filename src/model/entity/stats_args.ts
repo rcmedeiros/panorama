@@ -7,7 +7,7 @@ export type StatsArgs = {
   vscodeLabels: string;
   intellij?: Tuple<number, 24>;
   gitEvents?: Tuple<number, 24>;
-  sql?: Tuple<number, 24>;
+  dbQueries?: Tuple<number, 24>;
   aws?: Tuple<number, 24>;
   teams?: Tuple<number, 24>;
 };

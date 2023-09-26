@@ -164,7 +164,6 @@ export class SQLLogScanner {
   }
 
   public scan(): void {
-    return;
     void (async (): Promise<void> => {
       await this.memberDAO.isReady();
 
@@ -219,7 +218,7 @@ export class SQLLogScanner {
           Object.entries(queryCount.inserts).forEach(([hour, count]: [string, number]) => {
             dbQueries.push({
               member: queryCount.username,
-              dateTime: new Date(parseInt(hour)),
+              datetime: new Date(parseInt(hour)),
               queries: count,
             });
           });

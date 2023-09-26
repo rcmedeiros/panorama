@@ -1,4 +1,4 @@
-import { DataAccessFactory, GitlabDAO, GitlabEvent, LocalFile, Member, MemberDAO, StatsArgs, Tuple } from '../model';
+import { DataAccessFactory, DbQueries, GitlabDAO, GitlabEvent, LocalFile, Member, MemberDAO, StatsArgs, Tuple } from '../model';
 
 export class Dashboard {
   private readonly memberDAO: MemberDAO;
@@ -29,12 +29,18 @@ export class Dashboard {
         gitEvents[e.created_at.getHours()]++;
       });
 
+      const dbQueries: Tuple<number, 24> = [...this.empty];
+      member.dbQueries.forEach((dq: DbQueries) => {
+        dbQueries[dq.datetime.getHours()] = dq.queries;
+      });
+
       const statsArgs: StatsArgs = {
         username: member.username,
         name: member.name,
         vscode,
         vscodeLabels: Array.from(vscodeLabels).join('|'),
         gitEvents,
+        dbQueries,
       };
 
       result.push(statsArgs);
